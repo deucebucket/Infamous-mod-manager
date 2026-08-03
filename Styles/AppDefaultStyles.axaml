@@ -15,7 +15,7 @@
 
   </Style>
 
-  <Style Selector="RadioButton">
+  <Style Selector="Button">
     <Setter Property="FontSize" Value="14"></Setter>
     <Setter Property="Background" Value="#51576d"></Setter>
     <Setter Property="Foreground" Value="#c6d0f5"></Setter>

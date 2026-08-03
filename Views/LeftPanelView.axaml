@@ -4,33 +4,26 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="600"
              x:Class="InfamousModManager.Views.LeftPanelView">
-  <Grid RowDefinitions="550,*"
-        Background="{DynamicResource ResourceKey=SecondaryBackground}"
-        Margin="10">
-    <StackPanel Margin="10"
-                Grid.Row="0">
-      <RadioButton>
-        InFamous 1
-      </RadioButton>
-      <RadioButton>
-        InFamous 2
-      </RadioButton>
-      <RadioButton>
-        InFamous Festival of Blood
-      </RadioButton>
-    </StackPanel>
-    <StackPanel Margin="10"
-                Grid.Row="1"
-                Orientation="Horizontal">
-      <Button>
-        Discord
-      </Button>
-      <Button>
-        Settings
-      </Button>
-      <Button>
-        Info
-      </Button>
-    </StackPanel>
-  </Grid>
+    <Border CornerRadius="10"
+            Background="{DynamicResource ResourceKey=SecondaryBackground}"
+            Margin="10">
+        
+        <Grid RowDefinitions="*,Auto"
+              Margin="10">
+            
+            <StackPanel Spacing="10">
+                <Button Content="InFamous 1"/>
+                <Button Content="InFamous 2"/>
+                <Button Content="InFamous Festival of Blood"/>
+            </StackPanel>
+            
+            <StackPanel Grid.Row="1" 
+                       Orientation="Horizontal" 
+                       Spacing="5">
+                <Button Content="Discord"/>
+                <Button Content="Settings"/>
+                <Button Content="Info"/>
+            </StackPanel>
+        </Grid>
+    </Border>
 </UserControl>
