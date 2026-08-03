@@ -2,10 +2,13 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="600"
              x:Class="InfamousModManager.Views.LeftPanelView">
-  <Border Background="Magenta">
-    <StackPanel Margin="10">
+  <Grid RowDefinitions="550,*"
+        Background="{DynamicResource ResourceKey=SecondaryBackground}"
+        Margin="10">
+    <StackPanel Margin="10"
+                Grid.Row="0">
       <RadioButton>
         InFamous 1
       </RadioButton>
@@ -16,5 +19,18 @@
         InFamous Festival of Blood
       </RadioButton>
     </StackPanel>
-  </Border>
+    <StackPanel Margin="10"
+                Grid.Row="1"
+                Orientation="Horizontal">
+      <Button>
+        Discord
+      </Button>
+      <Button>
+        Settings
+      </Button>
+      <Button>
+        Info
+      </Button>
+    </StackPanel>
+  </Grid>
 </UserControl>

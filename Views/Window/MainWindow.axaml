@@ -19,7 +19,8 @@
              to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
         <vm:MainViewModel />
     </Design.DataContext>
-    <Grid ColumnDefinitions="230, *">
+    <Grid ColumnDefinitions="230, *"
+          Background="{DynamicResource ResourceKey=PrimaryBackground}">
         <ContentControl Content="{Binding LeftPanelViewModel}"
                         Grid.Column="0"/>
         <ContentControl Content="{Binding CurrentRightViewModel}"
