@@ -8,8 +8,8 @@
     <StackPanel HorizontalAlignment="Center"
                 VerticalAlignment="Center">
       <TextBlock Text="Welcome to InFamous Mod Manager!"
-             FontSize="24"
-             TextAlignment="Center"/>
+                 FontSize="24"
+                 TextAlignment="Center"/>
       <TextBlock Text="Please select your game on the left panel"
                  TextAlignment="Center"/>
     </StackPanel>

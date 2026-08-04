@@ -20,6 +20,7 @@
     <Setter Property="Background" Value="#51576d"></Setter>
     <Setter Property="Foreground" Value="#c6d0f5"></Setter>
     <Setter Property="Margin" Value="5"></Setter>
+    <Setter Property="HorizontalAlignment" Value="Stretch"/>
   </Style>
 
   <Style Selector="TextBlock">

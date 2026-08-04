@@ -2,24 +2,24 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="600"
+             mc:Ignorable="d" d:DesignWidth="250" d:DesignHeight="600"
              x:Class="InfamousModManager.Views.LeftPanelView">
     <Border CornerRadius="10"
             Background="{DynamicResource ResourceKey=SecondaryBackground}"
             Margin="10">
         
         <Grid RowDefinitions="*,Auto"
-              Margin="10">
+              Margin="7"
+              ShowGridLines="true">
             
-            <StackPanel Spacing="10">
+            <StackPanel>
                 <Button Content="InFamous 1"/>
                 <Button Content="InFamous 2"/>
                 <Button Content="InFamous Festival of Blood"/>
             </StackPanel>
             
             <StackPanel Grid.Row="1" 
-                       Orientation="Horizontal" 
-                       Spacing="5">
+                        Orientation="Horizontal">
                 <Button Content="Discord"/>
                 <Button Content="Settings"/>
                 <Button Content="Info"/>
