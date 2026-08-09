@@ -43,12 +43,52 @@ jobs:
           --configuration Release
           --runtime ${{ matrix.rid }}
           --self-contained true
+          -p:UseAppHost=true
           --no-restore
-          --output ./artifacts/${{ matrix.rid }}
+          --output ./publish/${{ matrix.rid }}
 
-      - name: Upload artifact
+      - name: Package macOS application
+        if: matrix.rid == 'osx-x64'
+        shell: bash
+        run: |
+          APP_BUNDLE="./artifacts/osx-x64/InFamousModManager.app"
+          mkdir -p "$APP_BUNDLE/Contents/MacOS"
+          cp -a "./publish/osx-x64/." "$APP_BUNDLE/Contents/MacOS"
+          cat > "$APP_BUNDLE/Contents/Info.plist" <<'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>CFBundleExecutable</key>
+            <string>InfamousModManager</string>
+            <key>CFBundleIdentifier</key>
+            <string>com.mentallyillkid.infamousmodmanager</string>
+            <key>CFBundleName</key>
+            <string>InFamous Mod Manager</string>
+            <key>CFBundlePackageType</key>
+            <string>APPL</string>
+            <key>CFBundleShortVersionString</key>
+            <string>1.0.0</string>
+            <key>CFBundleVersion</key>
+            <string>1</string>
+            <key>NSHighResolutionCapable</key>
+            <true/>
+          </dict>
+          </plist>
+          EOF
+
+      - name: Upload Windows or Linux artifact
+        if: matrix.rid != 'osx-x64'
         uses: actions/upload-artifact@v4
         with:
           name: InFamousModManager-${{ matrix.rid }}
-          path: ./artifacts/${{ matrix.rid }}
+          path: ./publish/${{ matrix.rid }}
+          retention-days: 14
+
+      - name: Upload macOS app bundle
+        if: matrix.rid == 'osx-x64'
+        uses: actions/upload-artifact@v4
+        with:
+          name: InFamousModManager-${{ matrix.rid }}
+          path: ./artifacts/osx-x64/InFamousModManager.app
           retention-days: 14
