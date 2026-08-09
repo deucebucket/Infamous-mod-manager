@@ -29,11 +29,24 @@ public abstract partial class GamePageViewModelBase : ViewModelBase
     [ObservableProperty]
     private bool _isPsarcExtractionSuccessful;
 
+    [ObservableProperty]
+    private string _modFilePath = string.Empty;
+
+    [ObservableProperty]
+    private string? _modInstallationStatus;
+
+    [ObservableProperty]
+    private bool _isModInstallationSuccessful;
+
     public bool HasGameFolderStatus => !string.IsNullOrWhiteSpace(GameFolderStatus);
 
     public bool HasPsarcExtractionStatus => !string.IsNullOrWhiteSpace(PsarcExtractionStatus);
 
     public bool IsPsarcExtractionFailed => HasPsarcExtractionStatus && !IsPsarcExtractionSuccessful;
+
+    public bool HasModInstallationStatus => !string.IsNullOrWhiteSpace(ModInstallationStatus);
+
+    public bool IsModInstallationFailed => HasModInstallationStatus && !IsModInstallationSuccessful;
 
     [RelayCommand]
     private async Task BrowseGameFolderAsync(IStorageProvider storageProvider)
@@ -90,6 +103,41 @@ public abstract partial class GamePageViewModelBase : ViewModelBase
         }
     }
 
+    [RelayCommand]
+    private async Task BrowseModFileAsync(IStorageProvider storageProvider)
+    {
+        var selectedFiles = await storageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = "Select an XPPS mod file",
+            AllowMultiple = false,
+            FileTypeFilter = [new FilePickerFileType("XPPS files") { Patterns = ["*.xpps"] }]
+        });
+
+        if (selectedFiles.Count > 0)
+        {
+            ModFilePath = selectedFiles[0].Path.LocalPath;
+        }
+    }
+
+    [RelayCommand]
+    private async Task InstallModAsync()
+    {
+        ModInstallationStatus = null;
+        IsModInstallationSuccessful = false;
+
+        try
+        {
+            var service = new GameModInstallationService();
+            var installedPath = await Task.Run(() => service.Install(GameFolderPath, GameFolderName, ModFilePath));
+            IsModInstallationSuccessful = true;
+            ModInstallationStatus = $"Mod installed: {installedPath}";
+        }
+        catch (Exception exception)
+        {
+            ModInstallationStatus = $"Mod installation failed: {exception.Message}";
+        }
+    }
+
     partial void OnGameFolderStatusChanged(string? value)
     {
         OnPropertyChanged(nameof(HasGameFolderStatus));
@@ -104,5 +152,16 @@ public abstract partial class GamePageViewModelBase : ViewModelBase
     partial void OnIsPsarcExtractionSuccessfulChanged(bool value)
     {
         OnPropertyChanged(nameof(IsPsarcExtractionFailed));
+    }
+
+    partial void OnModInstallationStatusChanged(string? value)
+    {
+        OnPropertyChanged(nameof(HasModInstallationStatus));
+        OnPropertyChanged(nameof(IsModInstallationFailed));
+    }
+
+    partial void OnIsModInstallationSuccessfulChanged(bool value)
+    {
+        OnPropertyChanged(nameof(IsModInstallationFailed));
     }
 }

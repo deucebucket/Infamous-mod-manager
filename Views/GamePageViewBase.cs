@@ -17,4 +17,15 @@ public abstract class GamePageViewBase : UserControl
 
         await viewModel.BrowseGameFolderCommand.ExecuteAsync(topLevel.StorageProvider);
     }
+
+    protected async void BrowseModFile_Click(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not GamePageViewModelBase viewModel ||
+            TopLevel.GetTopLevel(this) is not { } topLevel)
+        {
+            return;
+        }
+
+        await viewModel.BrowseModFileCommand.ExecuteAsync(topLevel.StorageProvider);
+    }
 }

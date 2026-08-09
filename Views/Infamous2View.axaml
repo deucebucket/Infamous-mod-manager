@@ -44,11 +44,20 @@
           <TextBlock Text="{DynamicResource InstallTitle}" FontSize="18" FontWeight="SemiBold" />
           <TextBlock Text="{DynamicResource InstallDescription}" TextWrapping="Wrap" />
           <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-            <TextBox PlaceholderText="{DynamicResource XppsFilePlaceholder}" />
+            <TextBox Text="{Binding ModFilePath, Mode=TwoWay}"
+                     PlaceholderText="{DynamicResource XppsFilePlaceholder}" />
             <Button Grid.Column="1" Content="…" Width="36" Margin="0"
-                    ToolTip.Tip="{DynamicResource BrowseXppsTooltip}" />
+                    ToolTip.Tip="{DynamicResource BrowseXppsTooltip}"
+                    Click="BrowseModFile_Click" />
           </Grid>
-          <Button Content="{DynamicResource InstallMod}" />
+          <Button Content="{DynamicResource InstallMod}"
+                  Command="{Binding InstallModCommand}" />
+          <TextBlock Text="{Binding ModInstallationStatus}"
+                     IsVisible="{Binding IsModInstallationSuccessful}"
+                     Foreground="#a6d189" TextWrapping="Wrap" />
+          <TextBlock Text="{Binding ModInstallationStatus}"
+                     IsVisible="{Binding IsModInstallationFailed}"
+                     Foreground="#e78284" TextWrapping="Wrap" />
         </StackPanel>
       </Border>
 
