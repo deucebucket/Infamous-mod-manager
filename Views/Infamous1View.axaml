@@ -1,9 +1,11 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:InfamousModManager.ViewModels"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="750" d:DesignHeight="600"
-             x:Class="InfamousModManager.Views.Infamous1View">
+             x:Class="InfamousModManager.Views.Infamous1View"
+             x:DataType="vm:Infamous1ViewModel">
   <Grid RowDefinitions="Auto,*" Margin="20">
     <TextBlock Text="InFamous 1" FontSize="24" FontWeight="SemiBold" />
 
@@ -14,10 +16,15 @@
           <TextBlock Text="{DynamicResource PrepareTitle}" FontSize="18" FontWeight="SemiBold" />
           <TextBlock Text="{DynamicResource PrepareDescription}" TextWrapping="Wrap" />
           <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-            <TextBox PlaceholderText="{DynamicResource GameFolderPlaceholder}" />
+            <TextBox Text="{Binding GameFolderPath, Mode=TwoWay}"
+                     PlaceholderText="{DynamicResource GameFolderPlaceholder}" />
             <Button Grid.Column="1" Content="…" Width="36" Margin="0"
-                    ToolTip.Tip="{DynamicResource BrowseFoldersTooltip}" />
+                    ToolTip.Tip="{DynamicResource BrowseFoldersTooltip}"
+                    Click="BrowseGameFolder_Click" />
           </Grid>
+          <TextBlock Text="{Binding GameFolderStatus}"
+                     IsVisible="{Binding HasGameFolderStatus}"
+                     TextWrapping="Wrap" />
           <Button Content="{DynamicResource UnpackGameFiles}" />
         </StackPanel>
       </Border>

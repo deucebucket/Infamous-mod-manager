@@ -1,8 +1,6 @@
-using Avalonia.Controls;
-
 namespace InfamousModManager.Views;
 
-public partial class InfamousFobView : UserControl
+public partial class InfamousFobView : GamePageViewBase
 {
     public InfamousFobView()
     {

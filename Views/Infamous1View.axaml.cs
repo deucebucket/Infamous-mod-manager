@@ -1,10 +1,6 @@
-using Avalonia;
-using Avalonia.Controls;
-using Avalonia.Markup.Xaml;
-
 namespace InfamousModManager.Views;
 
-public partial class Infamous1View : UserControl
+public partial class Infamous1View : GamePageViewBase
 {
     public Infamous1View()
     {

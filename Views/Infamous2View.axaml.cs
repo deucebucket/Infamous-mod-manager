@@ -1,8 +1,6 @@
-using Avalonia.Controls;
-
 namespace InfamousModManager.Views;
 
-public partial class Infamous2View : UserControl
+public partial class Infamous2View : GamePageViewBase
 {
     public Infamous2View()
     {

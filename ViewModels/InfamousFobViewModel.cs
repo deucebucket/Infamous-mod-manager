@@ -1,7 +1,8 @@
-using CommunityToolkit.Mvvm.ComponentModel;
-
 namespace InfamousModManager.ViewModels;
 
-public partial class InfamousFobViewModel : ViewModelBase
+public partial class InfamousFobViewModel : GamePageViewModelBase
 {
+    public InfamousFobViewModel() : base("NPEA00322")
+    {
+    }
 }
