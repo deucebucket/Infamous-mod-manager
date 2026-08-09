@@ -23,7 +23,8 @@
             </StackPanel>
             
             <StackPanel Grid.Row="1">
-                <Button Content="Discord"/>
+                <Button Content="Discord"
+                        Command="{Binding OpenDiscordCommand}" />
                 <TextBlock Text="{DynamicResource LanguageLabel}" Margin="5,5,5,0" />
                 <ComboBox ItemsSource="{Binding Languages}"
                           SelectedItem="{Binding SelectedLanguage}"

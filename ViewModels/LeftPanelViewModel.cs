@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -7,6 +8,8 @@ namespace InfamousModManager.ViewModels;
 
 public partial class LeftPanelViewModel : ViewModelBase
 {
+    private const string DiscordInviteUrl = "https://discord.gg/2F9FyCSCXV";
+
     private readonly Action<ViewModelBase> _navigateTo;
     private readonly Action<string> _setLanguage;
 
@@ -34,6 +37,12 @@ public partial class LeftPanelViewModel : ViewModelBase
 
     [RelayCommand]
     private void ShowInfamousFob() => _navigateTo(new InfamousFobViewModel());
+
+    [RelayCommand]
+    private static void OpenDiscord()
+    {
+        Process.Start(new ProcessStartInfo(DiscordInviteUrl) { UseShellExecute = true });
+    }
 
     partial void OnSelectedLanguageChanged(LanguageOption? value)
     {
