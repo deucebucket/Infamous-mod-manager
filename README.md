@@ -23,7 +23,7 @@ The application is built with Avalonia UI, .NET, and CommunityToolkit.Mvvm.
   - backs up the original file before installing the mod;
   - reports successful and failed operations in the UI.
 
-Backups are stored beside the application executable in the `backup` directory, grouped by game ID.
+Backups and `user-data.json` are stored beside the application executable. Backups are grouped by game ID in the `backup` directory.
 
 ## Planned features
 

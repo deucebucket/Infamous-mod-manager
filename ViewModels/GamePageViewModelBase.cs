@@ -10,6 +10,8 @@ namespace InfamousModManager.ViewModels;
 
 public abstract partial class GamePageViewModelBase : ViewModelBase
 {
+    private UserDataStore? _userDataStore;
+
     protected GamePageViewModelBase(string gameFolderName)
     {
         GameFolderName = gameFolderName;
@@ -22,6 +24,9 @@ public abstract partial class GamePageViewModelBase : ViewModelBase
 
     [ObservableProperty]
     private string? _gameFolderStatus;
+
+    [ObservableProperty]
+    private bool _isGameFolderValid;
 
     [ObservableProperty]
     private string? _psarcExtractionStatus;
@@ -48,6 +53,17 @@ public abstract partial class GamePageViewModelBase : ViewModelBase
 
     public bool IsModInstallationFailed => HasModInstallationStatus && !IsModInstallationSuccessful;
 
+    public void LoadSavedData(UserDataStore userDataStore)
+    {
+        _userDataStore = userDataStore;
+        var savedGameFolder = userDataStore.GetGameFolder(GameFolderName);
+
+        if (savedGameFolder is not null)
+        {
+            GameFolderPath = savedGameFolder.GameFolderPath;
+        }
+    }
+
     [RelayCommand]
     private async Task BrowseGameFolderAsync(IStorageProvider storageProvider)
     {
@@ -63,25 +79,39 @@ public abstract partial class GamePageViewModelBase : ViewModelBase
         }
 
         GameFolderPath = selectedFolders[0].Path.LocalPath;
-        ValidateGameFolder();
     }
 
     private void ValidateGameFolder()
     {
+        if (string.IsNullOrWhiteSpace(GameFolderPath))
+        {
+            IsGameFolderValid = false;
+            GameFolderStatus = null;
+            SaveGameFolderData();
+            return;
+        }
+
         var normalizedPath = GameFolderPath.Replace('\\', '/').TrimEnd('/');
         const string rpcS3GamePath = "/rpcs3/dev_hdd0/game";
 
         if (!normalizedPath.Contains(rpcS3GamePath, StringComparison.OrdinalIgnoreCase))
         {
+            IsGameFolderValid = false;
             GameFolderStatus = "Select the RPCS3 dev_hdd0/game folder.";
+            SaveGameFolderData();
             return;
         }
 
         var requiredGameFolder = Path.Combine(GameFolderPath, GameFolderName);
-        GameFolderStatus = Directory.Exists(requiredGameFolder)
+        IsGameFolderValid = Directory.Exists(requiredGameFolder);
+        GameFolderStatus = IsGameFolderValid
             ? $"Game folder found: {requiredGameFolder}"
             : $"Game folder '{GameFolderName}' was not found in the selected folder.";
+        SaveGameFolderData();
     }
+
+    private void SaveGameFolderData() =>
+        _userDataStore?.SaveGameFolder(GameFolderName, GameFolderPath, IsGameFolderValid);
 
     [RelayCommand]
     private async Task UnpackGameFilesAsync()
@@ -141,6 +171,11 @@ public abstract partial class GamePageViewModelBase : ViewModelBase
     partial void OnGameFolderStatusChanged(string? value)
     {
         OnPropertyChanged(nameof(HasGameFolderStatus));
+    }
+
+    partial void OnGameFolderPathChanged(string value)
+    {
+        ValidateGameFolder();
     }
 
     partial void OnPsarcExtractionStatusChanged(string? value)

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -14,12 +15,12 @@ public partial class LeftPanelViewModel : ViewModelBase
     private readonly Action<string> _setLanguage;
     private readonly Action _openInfoOverlay;
 
-    public LeftPanelViewModel(Action<ViewModelBase> navigateTo, Action<string> setLanguage, Action openInfoOverlay)
+    public LeftPanelViewModel(Action<ViewModelBase> navigateTo, Action<string> setLanguage, Action openInfoOverlay, string selectedLanguageCode)
     {
         _navigateTo = navigateTo;
         _setLanguage = setLanguage;
         _openInfoOverlay = openInfoOverlay;
-        SelectedLanguage = Languages[0];
+        SelectedLanguage = Languages.FirstOrDefault(language => language.Code == selectedLanguageCode) ?? Languages[0];
     }
 
     public IReadOnlyList<LanguageOption> Languages { get; } =

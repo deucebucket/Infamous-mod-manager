@@ -1,10 +1,13 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using InfamousModManager.Services;
 
 namespace InfamousModManager.ViewModels;
 
 public partial class MainViewModel : ViewModelBase
 {
+    private readonly UserDataStore _userDataStore;
+
     [ObservableProperty]
     private ViewModelBase _leftPanelViewModel;
 
@@ -14,20 +17,31 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isInfoOverlayOpen;
 
-    public MainViewModel()
+    public MainViewModel() : this(new UserDataStore())
     {
-        _leftPanelViewModel = new LeftPanelViewModel(NavigateTo, SetLanguage, OpenInfoOverlay);
+    }
+
+    public MainViewModel(UserDataStore userDataStore)
+    {
+        _userDataStore = userDataStore;
+        _leftPanelViewModel = new LeftPanelViewModel(NavigateTo, SetLanguage, OpenInfoOverlay, _userDataStore.SelectedLanguageCode);
         _currentRightViewModel = new GreetingViewModel();
     }
 
     private void NavigateTo(ViewModelBase viewModel)
     {
+        if (viewModel is GamePageViewModelBase gamePageViewModel)
+        {
+            gamePageViewModel.LoadSavedData(_userDataStore);
+        }
+
         CurrentRightViewModel = viewModel;
     }
 
-    private static void SetLanguage(string languageCode)
+    private void SetLanguage(string languageCode)
     {
         ((App)Avalonia.Application.Current!).SetLanguage(languageCode);
+        _userDataStore.SaveSelectedLanguage(languageCode);
     }
 
     [RelayCommand]
