@@ -28,7 +28,12 @@
           <Button Content="{DynamicResource UnpackGameFiles}"
                   Command="{Binding UnpackGameFilesCommand}" />
           <TextBlock Text="{Binding PsarcExtractionStatus}"
-                     IsVisible="{Binding HasPsarcExtractionStatus}"
+                     IsVisible="{Binding IsPsarcExtractionSuccessful}"
+                     Foreground="#a6d189"
+                     TextWrapping="Wrap" />
+          <TextBlock Text="{Binding PsarcExtractionStatus}"
+                     IsVisible="{Binding IsPsarcExtractionFailed}"
+                     Foreground="#e78284"
                      TextWrapping="Wrap" />
         </StackPanel>
       </Border>

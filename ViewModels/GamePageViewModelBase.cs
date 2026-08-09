@@ -26,9 +26,14 @@ public abstract partial class GamePageViewModelBase : ViewModelBase
     [ObservableProperty]
     private string? _psarcExtractionStatus;
 
+    [ObservableProperty]
+    private bool _isPsarcExtractionSuccessful;
+
     public bool HasGameFolderStatus => !string.IsNullOrWhiteSpace(GameFolderStatus);
 
     public bool HasPsarcExtractionStatus => !string.IsNullOrWhiteSpace(PsarcExtractionStatus);
+
+    public bool IsPsarcExtractionFailed => HasPsarcExtractionStatus && !IsPsarcExtractionSuccessful;
 
     [RelayCommand]
     private async Task BrowseGameFolderAsync(IStorageProvider storageProvider)
@@ -68,14 +73,19 @@ public abstract partial class GamePageViewModelBase : ViewModelBase
     [RelayCommand]
     private async Task UnpackGameFilesAsync()
     {
+        PsarcExtractionStatus = null;
+        IsPsarcExtractionSuccessful = false;
+
         try
         {
             var service = new GamePsarcExtractionService();
             var extractedFiles = await service.ExtractInstallArchivesAsync(GameFolderPath, GameFolderName);
+            IsPsarcExtractionSuccessful = true;
             PsarcExtractionStatus = $"Extracted {extractedFiles} files. Original archives were moved to backup.";
         }
         catch (Exception exception)
         {
+            IsPsarcExtractionSuccessful = false;
             PsarcExtractionStatus = $"Extraction failed: {exception.Message}";
         }
     }
@@ -88,5 +98,11 @@ public abstract partial class GamePageViewModelBase : ViewModelBase
     partial void OnPsarcExtractionStatusChanged(string? value)
     {
         OnPropertyChanged(nameof(HasPsarcExtractionStatus));
+        OnPropertyChanged(nameof(IsPsarcExtractionFailed));
+    }
+
+    partial void OnIsPsarcExtractionSuccessfulChanged(bool value)
+    {
+        OnPropertyChanged(nameof(IsPsarcExtractionFailed));
     }
 }
