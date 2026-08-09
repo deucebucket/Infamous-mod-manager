@@ -2,9 +2,9 @@ name: Build
 
 on:
   push:
-    branches: [main]
+    branches: [main, test-github-actions]
   pull_request:
-    branches: [main]
+    branches: [main, test-github-actions]
   workflow_dispatch:
 
 jobs:
