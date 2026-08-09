@@ -12,12 +12,17 @@ public partial class MainViewModel : ViewModelBase
 
     public MainViewModel()
     {
-        _leftPanelViewModel = new LeftPanelViewModel(NavigateTo);
+        _leftPanelViewModel = new LeftPanelViewModel(NavigateTo, SetLanguage);
         _currentRightViewModel = new GreetingViewModel();
     }
 
     private void NavigateTo(ViewModelBase viewModel)
     {
         CurrentRightViewModel = viewModel;
+    }
+
+    private static void SetLanguage(string languageCode)
+    {
+        ((App)Avalonia.Application.Current!).SetLanguage(languageCode);
     }
 }

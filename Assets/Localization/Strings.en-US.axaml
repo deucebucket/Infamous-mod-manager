@@ -1,0 +1,22 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <x:String x:Key="LanguageLabel">Language</x:String>
+  <x:String x:Key="PrepareTitle">Prepare files for modding</x:String>
+  <x:String x:Key="PrepareDescription">Select the folder containing the game files.</x:String>
+  <x:String x:Key="GameFolderPlaceholder">Path to game folder</x:String>
+  <x:String x:Key="BrowseFoldersTooltip">Browse folders</x:String>
+  <x:String x:Key="UnpackGameFiles">Unpack files</x:String>
+  <x:String x:Key="InstallTitle">Install mods</x:String>
+  <x:String x:Key="InstallDescription">Select a mod file in XPPS format.</x:String>
+  <x:String x:Key="XppsFilePlaceholder">Path to .xpps file</x:String>
+  <x:String x:Key="BrowseXppsTooltip">Browse XPPS files</x:String>
+  <x:String x:Key="InstallMod">Install mod</x:String>
+  <x:String x:Key="ExtractTitle">Extract original XPPS files</x:String>
+  <x:String x:Key="XppsSourcePlaceholder">Path to XPPS file or folder</x:String>
+  <x:String x:Key="BrowseSourceTooltip">Browse files and folders</x:String>
+  <x:String x:Key="OutputFolderPlaceholder">Extraction output folder</x:String>
+  <x:String x:Key="BrowseOutputTooltip">Browse output folders</x:String>
+  <x:String x:Key="ExtractXpps">Extract XPPS</x:String>
+  <x:String x:Key="InstalledModsTitle">Installed mods</x:String>
+  <x:String x:Key="ModifiedFilesPlaceholder">The list of modified files will appear here</x:String>
+</ResourceDictionary>

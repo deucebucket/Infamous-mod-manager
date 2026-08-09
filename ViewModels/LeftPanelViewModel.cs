@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 namespace InfamousModManager.ViewModels;
@@ -6,11 +8,23 @@ namespace InfamousModManager.ViewModels;
 public partial class LeftPanelViewModel : ViewModelBase
 {
     private readonly Action<ViewModelBase> _navigateTo;
+    private readonly Action<string> _setLanguage;
 
-    public LeftPanelViewModel(Action<ViewModelBase> navigateTo)
+    public LeftPanelViewModel(Action<ViewModelBase> navigateTo, Action<string> setLanguage)
     {
         _navigateTo = navigateTo;
+        _setLanguage = setLanguage;
+        SelectedLanguage = Languages[0];
     }
+
+    public IReadOnlyList<LanguageOption> Languages { get; } =
+    [
+        new("en-US", "English"),
+        new("ru-RU", "Русский")
+    ];
+
+    [ObservableProperty]
+    private LanguageOption? _selectedLanguage;
 
     [RelayCommand]
     private void ShowInfamous1() => _navigateTo(new Infamous1ViewModel());
@@ -20,4 +34,17 @@ public partial class LeftPanelViewModel : ViewModelBase
 
     [RelayCommand]
     private void ShowInfamousFob() => _navigateTo(new InfamousFobViewModel());
+
+    partial void OnSelectedLanguageChanged(LanguageOption? value)
+    {
+        if (value is not null)
+        {
+            _setLanguage(value.Code);
+        }
+    }
+}
+
+public sealed record LanguageOption(string Code, string DisplayName)
+{
+    public override string ToString() => DisplayName;
 }

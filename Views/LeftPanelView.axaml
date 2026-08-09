@@ -22,10 +22,12 @@
                         Command="{Binding ShowInfamousFobCommand}" />
             </StackPanel>
             
-            <StackPanel Grid.Row="1" 
-                        Orientation="Horizontal">
+            <StackPanel Grid.Row="1">
                 <Button Content="Discord"/>
-                <Button Content="Settings"/>
+                <TextBlock Text="{DynamicResource LanguageLabel}" Margin="5,5,5,0" />
+                <ComboBox ItemsSource="{Binding Languages}"
+                          SelectedItem="{Binding SelectedLanguage}"
+                          Margin="5" />
                 <Button Content="Info"/>
             </StackPanel>
         </Grid>
