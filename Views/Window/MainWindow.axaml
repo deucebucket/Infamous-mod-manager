@@ -57,5 +57,19 @@
                 </Grid>
             </Border>
         </Border>
+        <StackPanel Grid.ColumnSpan="2"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Top"
+                    ZIndex="20">
+            <Button Classes="window-control"
+                    Content="—"
+                    ToolTip.Tip="Minimize"
+                    Click="MinimizeButton_Click" />
+            <Button Classes="window-control window-close"
+                    Content="×"
+                    ToolTip.Tip="Close"
+                    Click="CloseButton_Click" />
+        </StackPanel>
     </Grid>
 </Window>
