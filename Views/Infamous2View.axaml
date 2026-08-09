@@ -25,7 +25,11 @@
           <TextBlock Text="{Binding GameFolderStatus}"
                      IsVisible="{Binding HasGameFolderStatus}"
                      TextWrapping="Wrap" />
-          <Button Content="{DynamicResource UnpackGameFiles}" />
+          <Button Content="{DynamicResource UnpackGameFiles}"
+                  Command="{Binding UnpackGameFilesCommand}" />
+          <TextBlock Text="{Binding PsarcExtractionStatus}"
+                     IsVisible="{Binding HasPsarcExtractionStatus}"
+                     TextWrapping="Wrap" />
         </StackPanel>
       </Border>
 
