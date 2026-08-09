@@ -2,14 +2,67 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignWidth="550" d:DesignHeight="600"
+             mc:Ignorable="d" d:DesignWidth="750" d:DesignHeight="600"
              x:Class="InfamousModManager.Views.Infamous2View">
-  <Border CornerRadius="10"
-          Background="{DynamicResource ResourceKey=SecondaryBackground}"
-          Margin="10">
-    <TextBlock Text="InFamous 2"
-               FontSize="24"
-               HorizontalAlignment="Center"
-               VerticalAlignment="Center" />
-  </Border>
+  <Grid RowDefinitions="Auto,*" Margin="20">
+    <TextBlock Text="InFamous 2" FontSize="24" FontWeight="SemiBold" />
+
+    <Grid Grid.Row="1" Margin="0,16,0,0" RowDefinitions="*,*" ColumnDefinitions="*,*">
+      <Border Grid.Row="0" Grid.Column="0" Margin="0,0,8,8" Padding="16"
+              CornerRadius="10" Background="{DynamicResource ResourceKey=SecondaryBackground}">
+        <StackPanel Spacing="10">
+          <TextBlock Text="Подготовка файлов к моддингу" FontSize="18" FontWeight="SemiBold" />
+          <TextBlock Text="Выберите папку с файлами игры." TextWrapping="Wrap" />
+          <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+            <TextBox PlaceholderText="Путь к папке игры" />
+            <Button Grid.Column="1" Content="…" Width="36" Margin="0"
+                    ToolTip.Tip="Обзор папок" />
+          </Grid>
+          <Button Content="Распаковать файлы" />
+        </StackPanel>
+      </Border>
+
+      <Border Grid.Row="0" Grid.Column="1" Margin="8,0,0,8" Padding="16"
+              CornerRadius="10" Background="{DynamicResource ResourceKey=SecondaryBackground}">
+        <StackPanel Spacing="10">
+          <TextBlock Text="Установка модов" FontSize="18" FontWeight="SemiBold" />
+          <TextBlock Text="Выберите файл мода в формате XPPS." TextWrapping="Wrap" />
+          <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+            <TextBox PlaceholderText="Путь к файлу .xpps" />
+            <Button Grid.Column="1" Content="…" Width="36" Margin="0"
+                    ToolTip.Tip="Обзор XPPS-файлов" />
+          </Grid>
+          <Button Content="Установить мод" />
+        </StackPanel>
+      </Border>
+
+      <Border Grid.Row="1" Grid.Column="0" Margin="0,8,8,0" Padding="16"
+              CornerRadius="10" Background="{DynamicResource ResourceKey=SecondaryBackground}">
+        <StackPanel Spacing="10">
+          <TextBlock Text="Распаковка оригинальных XPPS" FontSize="18" FontWeight="SemiBold" />
+          <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+            <TextBox PlaceholderText="Путь к XPPS-файлу или папке" />
+            <Button Grid.Column="1" Content="…" Width="36" Margin="0"
+                    ToolTip.Tip="Обзор файлов и папок" />
+          </Grid>
+          <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+            <TextBox PlaceholderText="Папка для распаковки" />
+            <Button Grid.Column="1" Content="…" Width="36" Margin="0"
+                    ToolTip.Tip="Обзор папок назначения" />
+          </Grid>
+          <Button Content="Распаковать XPPS" />
+        </StackPanel>
+      </Border>
+
+      <Border Grid.Row="1" Grid.Column="1" Margin="8,8,0,0" Padding="16"
+              CornerRadius="10" Background="{DynamicResource ResourceKey=SecondaryBackground}">
+        <Grid RowDefinitions="Auto,*" RowSpacing="10">
+          <TextBlock Text="Установленные моды" FontSize="18" FontWeight="SemiBold" />
+          <ListBox Grid.Row="1">
+            <ListBoxItem Content="Список изменённых файлов появится здесь" IsEnabled="False" />
+          </ListBox>
+        </Grid>
+      </Border>
+    </Grid>
+  </Grid>
 </UserControl>
