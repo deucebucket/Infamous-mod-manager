@@ -11,8 +11,7 @@
             Margin="10">
         
         <Grid RowDefinitions="*,Auto"
-              Margin="7"
-              ShowGridLines="true">
+              Margin="7">
             
             <StackPanel>
                 <Button Content="InFamous 1"
