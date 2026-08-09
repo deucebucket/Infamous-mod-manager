@@ -17,7 +17,7 @@ jobs:
         include:
           - os: ubuntu-latest
             rid: linux-x64
-          - os: win-latest
+          - os: windows-latest
             rid: win-x64
           - os: macos-latest
             rid: osx-x64
@@ -32,7 +32,7 @@ jobs:
           dotnet-version: 10.0.x
 
       - name: Restore dependencies
-        run: dotnet restore
+        run: dotnet restore --runtime ${{ matrix.rid }}
 
       - name: Build
         run: dotnet build --configuration Release --no-restore
