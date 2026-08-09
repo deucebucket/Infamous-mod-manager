@@ -1,5 +1,4 @@
 using CommunityToolkit.Mvvm.ComponentModel;
-using InfamousModManager.Views;
 
 namespace InfamousModManager.ViewModels;
 
@@ -13,7 +12,12 @@ public partial class MainViewModel : ViewModelBase
 
     public MainViewModel()
     {
-        _leftPanelViewModel = new LeftPanelViewModel();
+        _leftPanelViewModel = new LeftPanelViewModel(NavigateTo);
         _currentRightViewModel = new GreetingViewModel();
+    }
+
+    private void NavigateTo(ViewModelBase viewModel)
+    {
+        CurrentRightViewModel = viewModel;
     }
 }
