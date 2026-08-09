@@ -36,7 +36,8 @@
                         <SolidColorBrush x:Key="ComboBoxForeground">#c6d0f5</SolidColorBrush>
                     </ComboBox.Resources>
                 </ComboBox>
-                <Button Content="Info"/>
+                <Button Content="Info"
+                        Command="{Binding OpenInfoCommand}" />
             </StackPanel>
         </Grid>
     </Border>

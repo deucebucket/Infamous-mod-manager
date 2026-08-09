@@ -25,5 +25,37 @@
                         Grid.Column="0"/>
         <ContentControl Content="{Binding CurrentRightViewModel}"
                         Grid.Column="1"/>
+        <Border Grid.Column="1"
+                IsVisible="{Binding IsInfoOverlayOpen}"
+                Background="#99000000"
+                ZIndex="10">
+            <Border Width="480"
+                    Padding="24"
+                    CornerRadius="10"
+                    Background="{DynamicResource ResourceKey=SecondaryBackground}"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center">
+                <Grid RowDefinitions="Auto,*,Auto" RowSpacing="16">
+                    <TextBlock Text="About"
+                               FontSize="24"
+                               FontWeight="SemiBold" />
+                    <StackPanel Grid.Row="1" Spacing="10">
+                        <TextBlock Text="Application creator: mentally_ill_kid"
+                                   TextWrapping="Wrap" />
+                        <TextBlock Text="Original modding tools: tiffsomniac"
+                                   TextWrapping="Wrap" />
+                        <TextBlock Text="Reverse engineering xpps files: LDD565"
+                                   TextWrapping="Wrap" />
+                        <TextBlock Text=".NET version: 10.0"
+                                   TextWrapping="Wrap" />
+                        <TextBlock Text="UI framework: Avalonia 12.1.0"
+                                   TextWrapping="Wrap" />
+                    </StackPanel>
+                    <Button Grid.Row="2"
+                            Content="Close"
+                            Command="{Binding CloseInfoOverlayCommand}" />
+                </Grid>
+            </Border>
+        </Border>
     </Grid>
 </Window>

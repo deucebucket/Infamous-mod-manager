@@ -12,11 +12,13 @@ public partial class LeftPanelViewModel : ViewModelBase
 
     private readonly Action<ViewModelBase> _navigateTo;
     private readonly Action<string> _setLanguage;
+    private readonly Action _openInfoOverlay;
 
-    public LeftPanelViewModel(Action<ViewModelBase> navigateTo, Action<string> setLanguage)
+    public LeftPanelViewModel(Action<ViewModelBase> navigateTo, Action<string> setLanguage, Action openInfoOverlay)
     {
         _navigateTo = navigateTo;
         _setLanguage = setLanguage;
+        _openInfoOverlay = openInfoOverlay;
         SelectedLanguage = Languages[0];
     }
 
@@ -43,6 +45,9 @@ public partial class LeftPanelViewModel : ViewModelBase
     {
         Process.Start(new ProcessStartInfo(DiscordInviteUrl) { UseShellExecute = true });
     }
+
+    [RelayCommand]
+    private void OpenInfo() => _openInfoOverlay();
 
     partial void OnSelectedLanguageChanged(LanguageOption? value)
     {
