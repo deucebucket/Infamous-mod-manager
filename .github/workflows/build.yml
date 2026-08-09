@@ -17,10 +17,13 @@ jobs:
         include:
           - os: ubuntu-latest
             rid: linux-x64
+            include_native_libraries: true
           - os: windows-latest
             rid: win-x64
+            include_native_libraries: true
           - os: macos-latest
             rid: osx-x64
+            include_native_libraries: false
 
     steps:
       - name: Check out repository
@@ -44,6 +47,10 @@ jobs:
           --runtime ${{ matrix.rid }}
           --self-contained true
           -p:UseAppHost=true
+          -p:PublishSingleFile=true
+          -p:IncludeNativeLibrariesForSelfExtract=${{ matrix.include_native_libraries }}
+          -p:DebugType=None
+          -p:DebugSymbols=false
           --no-restore
           --output ./publish/${{ matrix.rid }}
 
