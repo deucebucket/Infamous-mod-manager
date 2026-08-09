@@ -21,14 +21,21 @@
                 <Button Content="InFamous Festival of Blood"
                         Command="{Binding ShowInfamousFobCommand}" />
             </StackPanel>
-            
+
             <StackPanel Grid.Row="1">
                 <Button Content="Discord"
                         Command="{Binding OpenDiscordCommand}" />
-                <TextBlock Text="{DynamicResource LanguageLabel}" Margin="5,5,5,0" />
                 <ComboBox ItemsSource="{Binding Languages}"
                           SelectedItem="{Binding SelectedLanguage}"
-                          Margin="5" />
+                          Margin="5">
+                    <ComboBox.Resources>
+                        <SolidColorBrush x:Key="ComboBoxBackground">#51576d</SolidColorBrush>
+                        <SolidColorBrush x:Key="ComboBoxBackgroundPointerOver">#51576d</SolidColorBrush>
+                        <SolidColorBrush x:Key="ComboBoxBackgroundPressed">#51576d</SolidColorBrush>
+                        <SolidColorBrush x:Key="ComboBoxBackgroundUnfocused">#51576d</SolidColorBrush>
+                        <SolidColorBrush x:Key="ComboBoxForeground">#c6d0f5</SolidColorBrush>
+                    </ComboBox.Resources>
+                </ComboBox>
                 <Button Content="Info"/>
             </StackPanel>
         </Grid>
