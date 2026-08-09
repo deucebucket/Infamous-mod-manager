@@ -19,4 +19,5 @@
   <x:String x:Key="ExtractXpps">Extract XPPS</x:String>
   <x:String x:Key="InstalledModsTitle">Installed mods</x:String>
   <x:String x:Key="ModifiedFilesPlaceholder">The list of modified files will appear here</x:String>
+  <x:String x:Key="ComingSoon">This feature will be available soon</x:String>
 </ResourceDictionary>

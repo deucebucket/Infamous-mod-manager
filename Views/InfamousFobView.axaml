@@ -61,9 +61,9 @@
         </StackPanel>
       </Border>
 
-      <Border Grid.Row="1" Grid.Column="0" Margin="0,8,8,0" Padding="16"
-              CornerRadius="10" Background="{DynamicResource ResourceKey=SecondaryBackground}">
-        <StackPanel Spacing="10">
+      <Grid Grid.Row="1" Grid.Column="0" Margin="0,8,8,0">
+        <Border Padding="16" CornerRadius="10" Background="{DynamicResource ResourceKey=SecondaryBackground}">
+          <StackPanel Spacing="10">
           <TextBlock Text="{DynamicResource ExtractTitle}" FontSize="18" FontWeight="SemiBold" />
           <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
             <TextBox PlaceholderText="{DynamicResource XppsSourcePlaceholder}" />
@@ -76,18 +76,34 @@
                     ToolTip.Tip="{DynamicResource BrowseOutputTooltip}" />
           </Grid>
           <Button Content="{DynamicResource ExtractXpps}" />
-        </StackPanel>
-      </Border>
+          </StackPanel>
+        </Border>
+        <Border Background="#99000000" CornerRadius="10">
+          <TextBlock Text="{DynamicResource ComingSoon}"
+                     FontSize="18" FontWeight="SemiBold"
+                     TextAlignment="Center"
+                     HorizontalAlignment="Center"
+                     VerticalAlignment="Center" />
+        </Border>
+      </Grid>
 
-      <Border Grid.Row="1" Grid.Column="1" Margin="8,8,0,0" Padding="16"
-              CornerRadius="10" Background="{DynamicResource ResourceKey=SecondaryBackground}">
-        <Grid RowDefinitions="Auto,*" RowSpacing="10">
-          <TextBlock Text="{DynamicResource InstalledModsTitle}" FontSize="18" FontWeight="SemiBold" />
-          <ListBox Grid.Row="1">
-            <ListBoxItem Content="{DynamicResource ModifiedFilesPlaceholder}" IsEnabled="False" />
-          </ListBox>
-        </Grid>
-      </Border>
+      <Grid Grid.Row="1" Grid.Column="1" Margin="8,8,0,0">
+        <Border Padding="16" CornerRadius="10" Background="{DynamicResource ResourceKey=SecondaryBackground}">
+          <Grid RowDefinitions="Auto,*" RowSpacing="10">
+            <TextBlock Text="{DynamicResource InstalledModsTitle}" FontSize="18" FontWeight="SemiBold" />
+            <ListBox Grid.Row="1">
+              <ListBoxItem Content="{DynamicResource ModifiedFilesPlaceholder}" IsEnabled="False" />
+            </ListBox>
+          </Grid>
+        </Border>
+        <Border Background="#99000000" CornerRadius="10">
+          <TextBlock Text="{DynamicResource ComingSoon}"
+                     FontSize="18" FontWeight="SemiBold"
+                     TextAlignment="Center"
+                     HorizontalAlignment="Center"
+                     VerticalAlignment="Center" />
+        </Border>
+      </Grid>
     </Grid>
   </Grid>
 </UserControl>

@@ -19,4 +19,5 @@
   <x:String x:Key="ExtractXpps">Распаковать XPPS</x:String>
   <x:String x:Key="InstalledModsTitle">Установленные моды</x:String>
   <x:String x:Key="ModifiedFilesPlaceholder">Список изменённых файлов появится здесь</x:String>
+  <x:String x:Key="ComingSoon">Функциональность скоро будет доступна</x:String>
 </ResourceDictionary>
