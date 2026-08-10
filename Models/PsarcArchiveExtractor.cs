@@ -66,7 +66,7 @@ public sealed class PsarcArchiveExtractor
 
         for (var index = 1; index < entries.Count; index++)
         {
-            var relativePath = GetSafeXppsPath(fileNames[index - 1]);
+            var relativePath = GetSafeGameFilePath(fileNames[index - 1]);
             if (relativePath is null)
             {
                 continue;
@@ -86,7 +86,7 @@ public sealed class PsarcArchiveExtractor
 
         if (extractedFiles == 0)
         {
-            throw new InvalidDataException("The PSARC archive does not contain XPPS files.");
+            throw new InvalidDataException("The PSARC archive does not contain XPP or XPPS files.");
         }
 
         return extractedFiles;
@@ -185,10 +185,11 @@ public sealed class PsarcArchiveExtractor
         return width;
     }
 
-    private static string? GetSafeXppsPath(string manifestPath)
+    private static string? GetSafeGameFilePath(string manifestPath)
     {
         var relativePath = manifestPath.Replace('\\', '/').TrimStart('/');
-        if (!relativePath.EndsWith(".xpps", StringComparison.OrdinalIgnoreCase))
+        if (!relativePath.EndsWith(".xpp", StringComparison.OrdinalIgnoreCase)
+            && !relativePath.EndsWith(".xpps", StringComparison.OrdinalIgnoreCase))
         {
             return null;
         }
