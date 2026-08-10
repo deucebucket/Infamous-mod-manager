@@ -158,9 +158,11 @@ public abstract partial class GamePageViewModelBase : ViewModelBase
         try
         {
             var service = new GameModInstallationService();
-            var installedPath = await Task.Run(() => service.Install(GameFolderPath, GameFolderName, ModFilePath));
+            var installationHistory = _userDataStore?.GetModInstallationHistory(GameFolderName) ?? [];
+            var result = await Task.Run(() => service.Install(GameFolderPath, GameFolderName, ModFilePath, installationHistory));
+            _userDataStore?.SaveModInstallation(GameFolderName, result.HistoryEntry);
             IsModInstallationSuccessful = true;
-            ModInstallationStatus = $"Mod installed: {installedPath}";
+            ModInstallationStatus = $"Mod installed: {result.InstalledPath}";
         }
         catch (Exception exception)
         {

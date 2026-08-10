@@ -1,12 +1,19 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
+using InfamousModManager.Models;
 
 namespace InfamousModManager.Services;
 
 public sealed class GameModInstallationService
 {
-    public string Install(string gameRoot, string gameFolderName, string selectedModPath)
+    public ModInstallationResult Install(
+        string gameRoot,
+        string gameFolderName,
+        string selectedModPath,
+        IReadOnlyCollection<ModInstallationHistoryEntry> installationHistory)
     {
         if (!File.Exists(selectedModPath))
         {
@@ -36,23 +43,103 @@ public sealed class GameModInstallationService
 
         var originalPath = matchingFiles[0];
         var relativeOriginalPath = Path.GetRelativePath(unpackedFilesDirectory, originalPath);
-        var backupDirectory = Path.Combine(AppContext.BaseDirectory, "backup", gameFolderName, "mods", Path.GetDirectoryName(relativeOriginalPath)!);
+        var normalizedRelativePath = relativeOriginalPath.Replace('\\', '/');
+        var previousFileSha256 = GetFileSha256(originalPath);
+        var firstInstallation = installationHistory
+            .Where(entry => string.Equals(entry.TargetRelativePath, normalizedRelativePath, StringComparison.OrdinalIgnoreCase))
+            .OrderBy(entry => entry.InstalledAtUtc)
+            .FirstOrDefault();
+
+        string originalFileSha256;
+        string originalBackupRelativePath;
+        if (firstInstallation is null)
+        {
+            originalFileSha256 = previousFileSha256;
+            originalBackupRelativePath = BackupOriginalFile(gameFolderName, relativeOriginalPath, originalPath);
+        }
+        else
+        {
+            originalFileSha256 = firstInstallation.OriginalFileSha256;
+            originalBackupRelativePath = firstInstallation.OriginalBackupRelativePath;
+            VerifyOriginalBackup(originalBackupRelativePath, originalFileSha256);
+        }
+
+        ReplaceFile(originalPath, normalizedModPath);
+        var installedFileSha256 = GetFileSha256(originalPath);
+
+        return new ModInstallationResult(
+            originalPath,
+            new ModInstallationHistoryEntry
+            {
+                TargetRelativePath = normalizedRelativePath,
+                OriginalFileSha256 = originalFileSha256,
+                PreviousFileSha256 = previousFileSha256,
+                InstalledFileSha256 = installedFileSha256,
+                OriginalBackupRelativePath = originalBackupRelativePath,
+                ModSourcePath = normalizedModPath,
+                InstalledAtUtc = DateTimeOffset.UtcNow
+            });
+    }
+
+    private static string BackupOriginalFile(string gameFolderName, string relativeOriginalPath, string originalPath)
+    {
+        var backupDirectory = Path.Combine(
+            AppContext.BaseDirectory,
+            "backup",
+            gameFolderName,
+            "mods",
+            Path.GetDirectoryName(relativeOriginalPath)!);
         Directory.CreateDirectory(backupDirectory);
 
         var backupPath = GetAvailableBackupPath(backupDirectory, Path.GetFileName(originalPath));
-        File.Move(originalPath, backupPath);
+        File.Copy(originalPath, backupPath);
+        var originalFileSha256 = GetFileSha256(originalPath);
+        if (!string.Equals(GetFileSha256(backupPath), originalFileSha256, StringComparison.Ordinal))
+        {
+            File.Delete(backupPath);
+            throw new IOException($"The backup verification failed for '{originalPath}'.");
+        }
 
+        return Path.GetRelativePath(AppContext.BaseDirectory, backupPath).Replace('\\', '/');
+    }
+
+    private static void VerifyOriginalBackup(string backupRelativePath, string expectedFileSha256)
+    {
+        var backupRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "backup")) + Path.DirectorySeparatorChar;
+        var backupPath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, backupRelativePath));
+        if (!backupPath.StartsWith(backupRoot, StringComparison.Ordinal) || !File.Exists(backupPath))
+        {
+            throw new FileNotFoundException("The original backup required to install this mod was not found.", backupPath);
+        }
+        if (!string.Equals(GetFileSha256(backupPath), expectedFileSha256, StringComparison.Ordinal))
+        {
+            throw new InvalidDataException($"The original backup hash does not match '{backupPath}'.");
+        }
+    }
+
+    private static void ReplaceFile(string destinationPath, string sourcePath)
+    {
+        var temporaryPath = Path.Combine(
+            Path.GetDirectoryName(destinationPath)!,
+            $".{Path.GetFileName(destinationPath)}.{Guid.NewGuid():N}.tmp");
         try
         {
-            File.Copy(normalizedModPath, originalPath);
+            File.Copy(sourcePath, temporaryPath);
+            File.Move(temporaryPath, destinationPath, overwrite: true);
         }
-        catch
+        finally
         {
-            File.Move(backupPath, originalPath);
-            throw;
+            if (File.Exists(temporaryPath))
+            {
+                File.Delete(temporaryPath);
+            }
         }
+    }
 
-        return originalPath;
+    private static string GetFileSha256(string path)
+    {
+        using var stream = File.OpenRead(path);
+        return Convert.ToHexString(SHA256.HashData(stream));
     }
 
     private static string NormalizeModFileName(string selectedModPath)
@@ -85,3 +172,5 @@ public sealed class GameModInstallationService
             : candidate;
     }
 }
+
+public sealed record ModInstallationResult(string InstalledPath, ModInstallationHistoryEntry HistoryEntry);

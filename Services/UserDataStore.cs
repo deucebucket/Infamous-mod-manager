@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 using InfamousModManager.Models;
 
@@ -40,9 +42,22 @@ public sealed class UserDataStore
                 ? new GameFolderData
                 {
                     GameFolderPath = gameFolder.GameFolderPath,
-                    IsGameFolderValid = gameFolder.IsGameFolderValid
+                    IsGameFolderValid = gameFolder.IsGameFolderValid,
+                    ModInstallationHistory = (gameFolder.ModInstallationHistory ?? [])
+                        .Select(CloneHistoryEntry)
+                        .ToList()
                 }
                 : null;
+        }
+    }
+
+    public IReadOnlyList<ModInstallationHistoryEntry> GetModInstallationHistory(string gameFolderName)
+    {
+        lock (_syncRoot)
+        {
+            return _data.GameFolders.TryGetValue(gameFolderName, out var gameFolder)
+                ? (gameFolder.ModInstallationHistory ?? []).Select(CloneHistoryEntry).ToArray()
+                : [];
         }
     }
 
@@ -59,14 +74,46 @@ public sealed class UserDataStore
     {
         lock (_syncRoot)
         {
-            _data.GameFolders[gameFolderName] = new GameFolderData
-            {
-                GameFolderPath = gameFolderPath,
-                IsGameFolderValid = isGameFolderValid
-            };
+            var gameFolder = GetOrCreateGameFolder(gameFolderName);
+            gameFolder.GameFolderPath = gameFolderPath;
+            gameFolder.IsGameFolderValid = isGameFolderValid;
             Save();
         }
     }
+
+    public void SaveModInstallation(string gameFolderName, ModInstallationHistoryEntry historyEntry)
+    {
+        lock (_syncRoot)
+        {
+            var gameFolder = GetOrCreateGameFolder(gameFolderName);
+            gameFolder.ModInstallationHistory.Add(CloneHistoryEntry(historyEntry));
+            Save();
+        }
+    }
+
+    private GameFolderData GetOrCreateGameFolder(string gameFolderName)
+    {
+        if (_data.GameFolders.TryGetValue(gameFolderName, out var gameFolder))
+        {
+            gameFolder.ModInstallationHistory ??= [];
+            return gameFolder;
+        }
+
+        gameFolder = new GameFolderData();
+        _data.GameFolders.Add(gameFolderName, gameFolder);
+        return gameFolder;
+    }
+
+    private static ModInstallationHistoryEntry CloneHistoryEntry(ModInstallationHistoryEntry entry) => new()
+    {
+        TargetRelativePath = entry.TargetRelativePath,
+        OriginalFileSha256 = entry.OriginalFileSha256,
+        PreviousFileSha256 = entry.PreviousFileSha256,
+        InstalledFileSha256 = entry.InstalledFileSha256,
+        OriginalBackupRelativePath = entry.OriginalBackupRelativePath,
+        ModSourcePath = entry.ModSourcePath,
+        InstalledAtUtc = entry.InstalledAtUtc
+    };
 
     private ApplicationData LoadOrCreate()
     {
