@@ -64,26 +64,30 @@
       <Grid Grid.Row="1" Grid.Column="0" Margin="0,8,8,0">
         <Border Padding="16" CornerRadius="10" Background="{DynamicResource ResourceKey=SecondaryBackground}">
           <StackPanel Spacing="10">
-          <TextBlock Text="{DynamicResource ExtractTitle}" FontSize="18" FontWeight="SemiBold" />
-          <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-            <TextBox PlaceholderText="{DynamicResource XppsSourcePlaceholder}" />
-            <Button Grid.Column="1" Content="…" Width="36" Margin="0"
-                    ToolTip.Tip="{DynamicResource BrowseSourceTooltip}" />
-          </Grid>
-          <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-            <TextBox PlaceholderText="{DynamicResource OutputFolderPlaceholder}" />
-            <Button Grid.Column="1" Content="…" Width="36" Margin="0"
-                    ToolTip.Tip="{DynamicResource BrowseOutputTooltip}" />
-          </Grid>
-          <Button Content="{DynamicResource ExtractXpps}" />
+            <TextBlock Text="{DynamicResource ExtractTitle}" FontSize="18" FontWeight="SemiBold" />
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+              <TextBox Text="{Binding XppArchivePath, Mode=TwoWay}"
+                       PlaceholderText="{DynamicResource XppsSourcePlaceholder}" />
+              <Button Grid.Column="1" Content="…" Width="36" Margin="0"
+                      ToolTip.Tip="{DynamicResource BrowseSourceTooltip}"
+                      Click="BrowseXppArchive_Click" />
+            </Grid>
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+              <TextBox Text="{Binding XppExtractionOutputPath, Mode=TwoWay}"
+                       PlaceholderText="{DynamicResource OutputFolderPlaceholder}" />
+              <Button Grid.Column="1" Content="…" Width="36" Margin="0"
+                      ToolTip.Tip="{DynamicResource BrowseOutputTooltip}"
+                      Click="BrowseXppExtractionOutput_Click" />
+            </Grid>
+            <Button Content="{DynamicResource ExtractXpps}"
+                    Command="{Binding ExtractXppArchiveCommand}" />
+            <TextBlock Text="{Binding XppExtractionStatus}"
+                       IsVisible="{Binding IsXppExtractionSuccessful}"
+                       Foreground="#a6d189" TextWrapping="Wrap" />
+            <TextBlock Text="{Binding XppExtractionStatus}"
+                       IsVisible="{Binding IsXppExtractionFailed}"
+                       Foreground="#e78284" TextWrapping="Wrap" />
           </StackPanel>
-        </Border>
-        <Border Background="#99000000" CornerRadius="10">
-          <TextBlock Text="{DynamicResource ComingSoon}"
-                     FontSize="18" FontWeight="SemiBold"
-                     TextAlignment="Center"
-                     HorizontalAlignment="Center"
-                     VerticalAlignment="Center" />
         </Border>
       </Grid>
 

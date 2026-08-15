@@ -16,6 +16,11 @@ The application is built with Avalonia UI, .NET, and CommunityToolkit.Mvvm.
 - Extraction of `install1` and `install2` PSARC archives into the selected game's `USRDIR` directory.
 - PSARC extraction with zlib and uncompressed-block support.
 - Automatic backup of original `.psarc_s` archives after successful extraction.
+- Lossless extraction of individual `.xpp` and `.xpps` PACK containers:
+  - extracts the original header, resource table, and payload;
+  - extracts indexed resource views and framed metadata chunks;
+  - writes a JSON manifest with offsets, sizes, types, ranges, and SHA-256 hashes;
+  - supports InFamous 1 XPP, InFamous 2/Festival of Blood XPPS, and empty archive stubs.
 - Native `.xpps` mod-file picker.
 - Mod installation into the unpacked game directory:
   - normalizes mod file names to lowercase with underscores;
@@ -27,7 +32,7 @@ Backups and `user-data.json` are stored beside the application executable. Backu
 
 ## Planned features
 
-- Extract individual original `.xpps` files or folders into a user-selected output directory.
+- Rebuild `.xpp` and `.xpps` archives from extraction manifests.
 - Display the list of installed mods and modified files.
 - Restore individual original files or all backups.
 - Better progress reporting and cancellation for long extraction operations.

@@ -11,12 +11,12 @@
   <x:String x:Key="XppsFilePlaceholder">Путь к файлу .xpps</x:String>
   <x:String x:Key="BrowseXppsTooltip">Обзор XPPS-файлов</x:String>
   <x:String x:Key="InstallMod">Установить мод</x:String>
-  <x:String x:Key="ExtractTitle">Распаковка оригинальных XPPS</x:String>
-  <x:String x:Key="XppsSourcePlaceholder">Путь к XPPS-файлу или папке</x:String>
-  <x:String x:Key="BrowseSourceTooltip">Обзор файлов и папок</x:String>
+  <x:String x:Key="ExtractTitle">Распаковка архива XPP/XPPS</x:String>
+  <x:String x:Key="XppsSourcePlaceholder">Путь к архиву .xpp или .xpps</x:String>
+  <x:String x:Key="BrowseSourceTooltip">Обзор архивов XPP/XPPS</x:String>
   <x:String x:Key="OutputFolderPlaceholder">Папка для распаковки</x:String>
   <x:String x:Key="BrowseOutputTooltip">Обзор папок назначения</x:String>
-  <x:String x:Key="ExtractXpps">Распаковать XPPS</x:String>
+  <x:String x:Key="ExtractXpps">Распаковать архив</x:String>
   <x:String x:Key="InstalledModsTitle">Установленные моды</x:String>
   <x:String x:Key="ModifiedFilesPlaceholder">Список изменённых файлов появится здесь</x:String>
   <x:String x:Key="ComingSoon">Функциональность скоро будет доступна</x:String>
