@@ -4,7 +4,7 @@ namespace InfamousModManager.Models;
 
 public sealed class XppArchiveManifest
 {
-    public const int CurrentManifestVersion = 1;
+    public const int CurrentManifestVersion = 2;
 
     public int ManifestVersion { get; init; } = CurrentManifestVersion;
 
@@ -45,6 +45,8 @@ public sealed class XppArchiveManifest
     public List<XppRangeRecordManifest> RangeRecords { get; init; } = [];
 
     public List<XppMetadataChunkManifest> MetadataChunks { get; init; } = [];
+
+    public List<XppTextureManifest> Textures { get; init; } = [];
 }
 
 public sealed class XppTableHeaderManifest
@@ -132,6 +134,31 @@ public sealed class XppMetadataChunkManifest
     public uint ByteLength { get; init; }
 
     public uint ResourceRelativeOffset { get; init; }
+
+    public string DataFile { get; init; } = string.Empty;
+
+    public string Sha256 { get; init; } = string.Empty;
+}
+
+public sealed class XppTextureManifest
+{
+    public int Index { get; init; }
+
+    public uint DescriptorLogicalOffset { get; init; }
+
+    public uint DataLogicalOffset { get; init; }
+
+    public uint DataLength { get; init; }
+
+    public int Width { get; init; }
+
+    public int Height { get; init; }
+
+    public int MipCount { get; init; }
+
+    public byte RsxFormat { get; init; }
+
+    public string Format { get; init; } = string.Empty;
 
     public string DataFile { get; init; } = string.Empty;
 

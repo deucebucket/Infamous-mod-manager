@@ -212,7 +212,7 @@ public abstract partial class GamePageViewModelBase : ViewModelBase
             IsXppExtractionSuccessful = true;
             XppExtractionStatus = result.IsEmptyStub
                 ? $"Empty archive extracted to: {result.OutputDirectory}"
-                : $"Extracted {result.ExtractedResourceCount} resources and {result.MetadataChunkCount} metadata chunks to: {result.OutputDirectory}";
+                : $"Extracted {result.ExtractedResourceCount} resources, {result.MetadataChunkCount} metadata chunks, and {result.TextureCount} DDS textures to: {result.OutputDirectory}";
         }
         catch (Exception exception)
         {

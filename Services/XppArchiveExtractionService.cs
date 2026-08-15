@@ -16,6 +16,13 @@ public sealed class XppArchiveExtractionService
     private const uint MetadataResourceType = 0x02040000;
     private const uint VirtualResourceType = 0x0C100000;
     private const int CopyBufferSize = 1024 * 1024;
+    private const int XppTextureDescriptorLength = 0x70;
+    private const int XppsTextureDescriptorLength = 0x60;
+
+    private static readonly byte[] XppTextureMarker = [0x02, 0x06, 0x20, 0x00];
+    private static readonly byte[] XppsTextureMarker = [0x02, 0x05, 0x20, 0x00];
+    private static readonly byte[] TextureDescriptorTail =
+        [0x00, 0x03, 0x01, 0x01, 0x80, 0x07, 0x80, 0x00, 0x00, 0x00, 0xAA, 0xE4];
 
     private static readonly JsonSerializerOptions ManifestJsonOptions = new()
     {
@@ -53,6 +60,7 @@ public sealed class XppArchiveExtractionService
                 outputDirectory,
                 manifest.Resources.Count(resource => resource.IsStoredRange),
                 manifest.MetadataChunks.Count,
+                manifest.Textures.Count,
                 manifest.IsEmptyStub);
         }
         catch
@@ -282,7 +290,6 @@ public sealed class XppArchiveExtractionService
                 {
                     metadataChunks.AddRange(ExtractMetadataChunks(
                         archive,
-                        parsedArchive,
                         resource,
                         physicalPayloadOffset,
                         stagingDirectory));
@@ -303,6 +310,8 @@ public sealed class XppArchiveExtractionService
             });
         }
 
+        var textures = ExtractTextures(archive, parsedArchive, physicalPayloadOffset, stagingDirectory);
+
         archive.Position = 0;
         var sourceSha256 = Convert.ToHexString(SHA256.HashData(archive));
         return new XppArchiveManifest
@@ -322,13 +331,315 @@ public sealed class XppArchiveExtractionService
             Descriptors = parsedArchive.Descriptors,
             Resources = extractedResources,
             RangeRecords = parsedArchive.RangeRecords,
-            MetadataChunks = metadataChunks
+            MetadataChunks = metadataChunks,
+            Textures = textures
         };
+    }
+
+    private static List<XppTextureManifest> ExtractTextures(
+        FileStream archive,
+        ParsedXppArchive parsedArchive,
+        long physicalPayloadOffset,
+        string stagingDirectory)
+    {
+        var descriptors = FindTextureDescriptors(archive, parsedArchive, physicalPayloadOffset);
+        if (descriptors.Count == 0)
+        {
+            return [];
+        }
+
+        var texturesDirectory = Path.Combine(stagingDirectory, "textures");
+        Directory.CreateDirectory(texturesDirectory);
+        var textures = new List<XppTextureManifest>(descriptors.Count);
+
+        foreach (var descriptor in descriptors)
+        {
+            var index = textures.Count;
+            var fileName = $"texture_{index:D4}_{descriptor.DataLogicalOffset:X8}_{descriptor.Width}x{descriptor.Height}_{descriptor.Format}_m{descriptor.MipCount}.dds";
+            var relativePath = Path.Combine("textures", fileName).Replace('\\', '/');
+            var sha256 = WriteDds(
+                archive,
+                checked(physicalPayloadOffset + descriptor.DataLogicalOffset),
+                Path.Combine(stagingDirectory, relativePath),
+                descriptor);
+
+            textures.Add(new XppTextureManifest
+            {
+                Index = index,
+                DescriptorLogicalOffset = descriptor.DescriptorLogicalOffset,
+                DataLogicalOffset = descriptor.DataLogicalOffset,
+                DataLength = descriptor.DataLength,
+                Width = descriptor.Width,
+                Height = descriptor.Height,
+                MipCount = descriptor.MipCount,
+                RsxFormat = descriptor.RsxFormat,
+                Format = descriptor.Format,
+                DataFile = relativePath,
+                Sha256 = sha256
+            });
+        }
+
+        return textures;
+    }
+
+    private static List<ParsedTextureDescriptor> FindTextureDescriptors(
+        FileStream archive,
+        ParsedXppArchive parsedArchive,
+        long physicalPayloadOffset)
+    {
+        if (parsedArchive.IsEmptyStub || parsedArchive.PayloadLength == 0)
+        {
+            return [];
+        }
+
+        var marker = parsedArchive.FormatVersion == 8 ? XppTextureMarker : XppsTextureMarker;
+        var descriptorLength = parsedArchive.FormatVersion == 8
+            ? XppTextureDescriptorLength
+            : XppsTextureDescriptorLength;
+        var buffer = new byte[CopyBufferSize + descriptorLength - 1];
+        var descriptors = new List<ParsedTextureDescriptor>();
+        var descriptorOffsets = new HashSet<uint>();
+        var textureKeys = new HashSet<(uint Offset, int Width, int Height, int Mips, byte Format)>();
+        long bytesReadFromPayload = 0;
+        var carryLength = 0;
+
+        while (bytesReadFromPayload < parsedArchive.PayloadLength)
+        {
+            var requested = checked((int)Math.Min(CopyBufferSize, parsedArchive.PayloadLength - bytesReadFromPayload));
+            archive.Position = checked(physicalPayloadOffset + bytesReadFromPayload);
+            var read = 0;
+            while (read < requested)
+            {
+                var count = archive.Read(buffer, carryLength + read, requested - read);
+                if (count == 0)
+                {
+                    throw new EndOfStreamException("Unexpected end of PACK payload while scanning textures.");
+                }
+
+                read += count;
+            }
+
+            var windowLength = carryLength + read;
+            var windowLogicalOffset = bytesReadFromPayload - carryLength;
+            var window = buffer.AsSpan(0, windowLength);
+            var cursor = 0;
+            while (cursor <= windowLength - marker.Length)
+            {
+                var markerOffset = window[cursor..].IndexOf(marker);
+                if (markerOffset < 0)
+                {
+                    break;
+                }
+
+                markerOffset += cursor;
+                if (markerOffset + descriptorLength <= windowLength)
+                {
+                    var descriptorLogicalOffset = checked((uint)(windowLogicalOffset + markerOffset));
+                    if (descriptorOffsets.Add(descriptorLogicalOffset) &&
+                        TryParseTextureDescriptor(
+                            window.Slice(markerOffset, descriptorLength),
+                            descriptorLogicalOffset,
+                            parsedArchive.FormatVersion,
+                            parsedArchive.PayloadLength,
+                            out var descriptor) &&
+                        textureKeys.Add((
+                            descriptor.DataLogicalOffset,
+                            descriptor.Width,
+                            descriptor.Height,
+                            descriptor.MipCount,
+                            descriptor.RsxFormat)))
+                    {
+                        descriptors.Add(descriptor);
+                    }
+                }
+
+                cursor = markerOffset + 1;
+            }
+
+            bytesReadFromPayload += read;
+            carryLength = Math.Min(descriptorLength - 1, windowLength);
+            window[^carryLength..].CopyTo(buffer);
+        }
+
+        return descriptors.OrderBy(descriptor => descriptor.DataLogicalOffset).ToList();
+    }
+
+    private static bool TryParseTextureDescriptor(
+        ReadOnlySpan<byte> bytes,
+        uint descriptorLogicalOffset,
+        int formatVersion,
+        uint payloadLength,
+        out ParsedTextureDescriptor descriptor)
+    {
+        descriptor = default!;
+        int width;
+        int height;
+        int mipCount;
+        byte rsxFormat;
+        uint dataLogicalOffset;
+        ReadOnlySpan<byte> tail;
+
+        if (formatVersion == 8)
+        {
+            var widthValue = BinaryPrimitives.ReadUInt32BigEndian(bytes[0x40..]);
+            var heightValue = BinaryPrimitives.ReadUInt32BigEndian(bytes[0x44..]);
+            var mipCountValue = BinaryPrimitives.ReadUInt32BigEndian(bytes[0x48..]);
+            if (widthValue > 16384 || heightValue > 16384 || mipCountValue > 16)
+            {
+                return false;
+            }
+
+            width = (int)widthValue;
+            height = (int)heightValue;
+            mipCount = (int)mipCountValue;
+            dataLogicalOffset = BinaryPrimitives.ReadUInt32BigEndian(bytes[0x5C..]);
+            rsxFormat = bytes[0x62];
+            tail = bytes[0x64..0x70];
+        }
+        else
+        {
+            var residentWidth = BinaryPrimitives.ReadUInt16BigEndian(bytes[4..]);
+            var residentHeight = BinaryPrimitives.ReadUInt16BigEndian(bytes[6..]);
+            mipCount = bytes[0x51];
+            rsxFormat = bytes[0x52];
+            dataLogicalOffset = BinaryPrimitives.ReadUInt32BigEndian(bytes[0x4C..]);
+            tail = bytes[0x54..0x60];
+
+            if (residentWidth == 0 || residentHeight == 0 || mipCount is < 1 or > 16)
+            {
+                return false;
+            }
+
+            var minimumLargestDimension = 1 << (mipCount - 1);
+            var residentLargestDimension = Math.Max(residentWidth, residentHeight);
+            var scale = minimumLargestDimension > residentLargestDimension
+                ? minimumLargestDimension / residentLargestDimension
+                : 1;
+            width = checked(residentWidth * scale);
+            height = checked(residentHeight * scale);
+        }
+
+        if (!tail.SequenceEqual(TextureDescriptorTail) ||
+            width is < 1 or > 16384 || height is < 1 or > 16384 || mipCount is < 1 or > 16 ||
+            !TryGetDxtFormat(rsxFormat, out var format, out var blockSize))
+        {
+            return false;
+        }
+
+        var dataLength = CalculateDxtDataLength(width, height, mipCount, blockSize);
+        if ((ulong)dataLogicalOffset + dataLength > payloadLength)
+        {
+            return false;
+        }
+
+        descriptor = new ParsedTextureDescriptor(
+            descriptorLogicalOffset,
+            dataLogicalOffset,
+            checked((uint)dataLength),
+            width,
+            height,
+            mipCount,
+            rsxFormat,
+            format,
+            blockSize);
+        return true;
+    }
+
+    private static bool TryGetDxtFormat(byte rsxFormat, out string format, out int blockSize)
+    {
+        (format, blockSize) = rsxFormat switch
+        {
+            0x86 => ("DXT1", 8),
+            0x87 => ("DXT3", 16),
+            0x88 => ("DXT5", 16),
+            _ => (string.Empty, 0)
+        };
+        return blockSize != 0;
+    }
+
+    private static ulong CalculateDxtDataLength(int width, int height, int mipCount, int blockSize)
+    {
+        ulong length = 0;
+        for (var mip = 0; mip < mipCount; mip++)
+        {
+            var blockWidth = Math.Max(1, (width + 3) / 4);
+            var blockHeight = Math.Max(1, (height + 3) / 4);
+            length = checked(length + (ulong)blockWidth * (ulong)blockHeight * (uint)blockSize);
+            width = Math.Max(1, width / 2);
+            height = Math.Max(1, height / 2);
+        }
+
+        return length;
+    }
+
+    private static string WriteDds(
+        Stream archive,
+        long sourceOffset,
+        string destinationPath,
+        ParsedTextureDescriptor descriptor)
+    {
+        var header = CreateDdsHeader(descriptor);
+        archive.Position = sourceOffset;
+        using var destination = new FileStream(destinationPath, FileMode.CreateNew, FileAccess.Write, FileShare.None);
+        using var hasher = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+        destination.Write(header);
+        hasher.AppendData(header);
+
+        var buffer = new byte[CopyBufferSize];
+        long remaining = descriptor.DataLength;
+        while (remaining > 0)
+        {
+            var requested = (int)Math.Min(buffer.Length, remaining);
+            var read = archive.Read(buffer, 0, requested);
+            if (read == 0)
+            {
+                throw new EndOfStreamException("Unexpected end of PACK texture data.");
+            }
+
+            destination.Write(buffer, 0, read);
+            hasher.AppendData(buffer, 0, read);
+            remaining -= read;
+        }
+
+        return Convert.ToHexString(hasher.GetHashAndReset());
+    }
+
+    private static byte[] CreateDdsHeader(ParsedTextureDescriptor descriptor)
+    {
+        const uint ddsMagic = 0x20534444;
+        const uint ddsHeaderFlags = 0x00081007;
+        const uint ddsHeaderMipMapCount = 0x00020000;
+        const uint ddsPixelFormatFourCc = 0x00000004;
+        const uint ddsCapsTexture = 0x00001000;
+        const uint ddsCapsComplex = 0x00000008;
+        const uint ddsCapsMipMap = 0x00400000;
+
+        var header = new byte[128];
+        BinaryPrimitives.WriteUInt32LittleEndian(header, ddsMagic);
+        BinaryPrimitives.WriteUInt32LittleEndian(header.AsSpan(4), 124);
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            header.AsSpan(8),
+            ddsHeaderFlags | (descriptor.MipCount > 1 ? ddsHeaderMipMapCount : 0));
+        BinaryPrimitives.WriteUInt32LittleEndian(header.AsSpan(12), checked((uint)descriptor.Height));
+        BinaryPrimitives.WriteUInt32LittleEndian(header.AsSpan(16), checked((uint)descriptor.Width));
+        var topLevelLength = checked((uint)(
+            Math.Max(1, (descriptor.Width + 3) / 4) *
+            Math.Max(1, (descriptor.Height + 3) / 4) *
+            descriptor.BlockSize));
+        BinaryPrimitives.WriteUInt32LittleEndian(header.AsSpan(20), topLevelLength);
+        BinaryPrimitives.WriteUInt32LittleEndian(header.AsSpan(24), 1);
+        BinaryPrimitives.WriteUInt32LittleEndian(header.AsSpan(28), checked((uint)descriptor.MipCount));
+        BinaryPrimitives.WriteUInt32LittleEndian(header.AsSpan(76), 32);
+        BinaryPrimitives.WriteUInt32LittleEndian(header.AsSpan(80), ddsPixelFormatFourCc);
+        Encoding.ASCII.GetBytes(descriptor.Format, header.AsSpan(84, 4));
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            header.AsSpan(108),
+            ddsCapsTexture | (descriptor.MipCount > 1 ? ddsCapsComplex | ddsCapsMipMap : 0));
+        return header;
     }
 
     private static IEnumerable<XppMetadataChunkManifest> ExtractMetadataChunks(
         FileStream archive,
-        ParsedXppArchive parsedArchive,
         XppResourceManifest resource,
         long physicalPayloadOffset,
         string stagingDirectory)
@@ -523,10 +834,22 @@ public sealed class XppArchiveExtractionService
         List<XppDescriptorManifest> Descriptors,
         List<XppResourceManifest> Resources,
         List<XppRangeRecordManifest> RangeRecords);
+
+    private sealed record ParsedTextureDescriptor(
+        uint DescriptorLogicalOffset,
+        uint DataLogicalOffset,
+        uint DataLength,
+        int Width,
+        int Height,
+        int MipCount,
+        byte RsxFormat,
+        string Format,
+        int BlockSize);
 }
 
 public sealed record XppArchiveExtractionResult(
     string OutputDirectory,
     int ExtractedResourceCount,
     int MetadataChunkCount,
+    int TextureCount,
     bool IsEmptyStub);

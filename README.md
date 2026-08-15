@@ -19,6 +19,7 @@ The application is built with Avalonia UI, .NET, and CommunityToolkit.Mvvm.
 - Lossless extraction of individual `.xpp` and `.xpps` PACK containers:
   - extracts the original header, resource table, and payload;
   - extracts indexed resource views and framed metadata chunks;
+  - detects embedded DXT1/DXT3/DXT5 textures and writes ready-to-use DDS files;
   - writes a JSON manifest with offsets, sizes, types, ranges, and SHA-256 hashes;
   - supports InFamous 1 XPP, InFamous 2/Festival of Blood XPPS, and empty archive stubs.
 - Native `.xpps` mod-file picker.
