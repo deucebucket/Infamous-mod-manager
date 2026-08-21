@@ -9,10 +9,13 @@ The application is built with Avalonia UI, .NET, and CommunityToolkit.Mvvm.
 - Game selection for InFamous 1, InFamous 2, and InFamous: Festival of Blood.
 - English and Russian interface languages.
 - Native folder picker for locating the RPCS3 `dev_hdd0/game` directory.
-- Validation of the expected game folders:
-  - `NPUA80480` — InFamous 1;
+- Detection and validation of supported game editions:
+  - `NPUA80480` — InFamous 1 PSN edition (loose XPPS workflow);
+  - `BCUS98119` — InFamous 1 Blu-ray / InFamous Collection edition (packed PSARC workflow);
   - `NPUA80638` — InFamous 2;
   - `NPEA00322` — InFamous: Festival of Blood.
+- Independent saved paths, backup directories, and installation history for each detected title ID.
+- Explicit ambiguity and incomplete-installation errors instead of guessing when more than one edition is present.
 - Extraction of `install1` and `install2` PSARC archives into the selected game's `USRDIR` directory.
 - PSARC extraction with zlib and uncompressed-block support.
 - Automatic backup of original `.psarc_s` archives after successful extraction.
@@ -28,8 +31,15 @@ The application is built with Avalonia UI, .NET, and CommunityToolkit.Mvvm.
   - finds the matching original `.xpps` file;
   - backs up the original file before installing the mod;
   - reports successful and failed operations in the UI.
+- Audited packed-profile installation for `BCUS98119`:
+  - accepts a flat `infamous1.psarc_s`/`infamous2.psarc_s` pair or `install1`/`install2` subdirectories;
+  - verifies both archives against the retail manifest order and block layout;
+  - creates and hash-checks a protected retail backup before the first installation;
+  - stages and hash-checks the complete pair before swapping either live archive;
+  - rolls both archives back if activation fails and restores the verified retail pair on request;
+  - refuses archive changes while RPCS3 is running.
 
-Backups and `user-data.json` are stored beside the application executable. Backups are grouped by game ID in the `backup` directory.
+Backups and `user-data.json` are stored beside the application executable. Backups are grouped by detected game ID in the `backup` directory. The verified `BCUS98119` retail pair is stored under `backup/BCUS98119/packed-retail` and is never modified in place.
 
 ## Planned features
 
