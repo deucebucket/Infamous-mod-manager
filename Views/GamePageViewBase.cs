@@ -29,6 +29,28 @@ public abstract class GamePageViewBase : UserControl
         await viewModel.BrowseModFileCommand.ExecuteAsync(topLevel.StorageProvider);
     }
 
+    protected async void BrowsePsarcProfile_Click(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not GamePageViewModelBase viewModel ||
+            TopLevel.GetTopLevel(this) is not { } topLevel)
+        {
+            return;
+        }
+
+        await viewModel.BrowsePsarcProfileCommand.ExecuteAsync(topLevel.StorageProvider);
+    }
+
+    protected async void BrowseCleanRetailPsarc_Click(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not GamePageViewModelBase viewModel ||
+            TopLevel.GetTopLevel(this) is not { } topLevel)
+        {
+            return;
+        }
+
+        await viewModel.BrowseCleanRetailPsarcCommand.ExecuteAsync(topLevel.StorageProvider);
+    }
+
     protected async void BrowseXppArchive_Click(object? sender, RoutedEventArgs e)
     {
         if (DataContext is not GamePageViewModelBase viewModel ||

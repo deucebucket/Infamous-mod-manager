@@ -1,8 +1,10 @@
+using InfamousModManager.Models;
+
 namespace InfamousModManager.ViewModels;
 
 public partial class InfamousFobViewModel : GamePageViewModelBase
 {
-    public InfamousFobViewModel() : base("NPEA00322")
+    public InfamousFobViewModel() : base([GameEditions.FestivalOfBloodPsn])
     {
     }
 }

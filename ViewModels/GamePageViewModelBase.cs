@@ -1,23 +1,42 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using InfamousModManager.Models;
 using InfamousModManager.Services;
 
 namespace InfamousModManager.ViewModels;
 
 public abstract partial class GamePageViewModelBase : ViewModelBase
 {
+    private readonly IReadOnlyList<GameEdition> _gameEditions;
     private UserDataStore? _userDataStore;
+    private GameEdition? _detectedEdition;
 
-    protected GamePageViewModelBase(string gameFolderName)
+    protected GamePageViewModelBase(IReadOnlyList<GameEdition> gameEditions)
     {
-        GameFolderName = gameFolderName;
+        if (gameEditions.Count == 0)
+        {
+            throw new ArgumentException("At least one game edition is required.", nameof(gameEditions));
+        }
+
+        _gameEditions = gameEditions;
     }
 
-    public string GameFolderName { get; }
+    // The first ID remains the compatibility key for existing saved data.
+    public string GameFolderName => _gameEditions[0].TitleId;
+
+    public string ActiveGameFolderName => _detectedEdition?.TitleId ?? GameFolderName;
+
+    public string? DetectedEditionName => _detectedEdition?.DisplayName;
+
+    public bool IsLooseModInstallation => _detectedEdition?.ModMode == GameModMode.LooseXpps;
+
+    public bool IsPackedPsarcInstallation => _detectedEdition?.ModMode == GameModMode.PackedPsarc;
 
     [ObservableProperty]
     private string _gameFolderPath = string.Empty;
@@ -44,6 +63,18 @@ public abstract partial class GamePageViewModelBase : ViewModelBase
     private bool _isModInstallationSuccessful;
 
     [ObservableProperty]
+    private string _psarcProfilePath = string.Empty;
+
+    [ObservableProperty]
+    private string _cleanRetailPsarcPath = string.Empty;
+
+    [ObservableProperty]
+    private string? _packedPsarcStatus;
+
+    [ObservableProperty]
+    private bool _isPackedPsarcSuccessful;
+
+    [ObservableProperty]
     private string _xppArchivePath = string.Empty;
 
     [ObservableProperty]
@@ -65,6 +96,10 @@ public abstract partial class GamePageViewModelBase : ViewModelBase
 
     public bool IsModInstallationFailed => HasModInstallationStatus && !IsModInstallationSuccessful;
 
+    public bool HasPackedPsarcStatus => !string.IsNullOrWhiteSpace(PackedPsarcStatus);
+
+    public bool IsPackedPsarcFailed => HasPackedPsarcStatus && !IsPackedPsarcSuccessful;
+
     public bool HasXppExtractionStatus => !string.IsNullOrWhiteSpace(XppExtractionStatus);
 
     public bool IsXppExtractionFailed => HasXppExtractionStatus && !IsXppExtractionSuccessful;
@@ -72,7 +107,9 @@ public abstract partial class GamePageViewModelBase : ViewModelBase
     public void LoadSavedData(UserDataStore userDataStore)
     {
         _userDataStore = userDataStore;
-        var savedGameFolder = userDataStore.GetGameFolder(GameFolderName);
+        var savedGameFolder = _gameEditions
+            .Select(edition => userDataStore.GetGameFolder(edition.TitleId))
+            .FirstOrDefault(saved => saved is not null && !string.IsNullOrWhiteSpace(saved.GameFolderPath));
 
         if (savedGameFolder is not null)
         {
@@ -101,33 +138,41 @@ public abstract partial class GamePageViewModelBase : ViewModelBase
     {
         if (string.IsNullOrWhiteSpace(GameFolderPath))
         {
+            SetDetectedEdition(null);
             IsGameFolderValid = false;
             GameFolderStatus = null;
             SaveGameFolderData();
             return;
         }
 
-        var normalizedPath = GameFolderPath.Replace('\\', '/').TrimEnd('/');
-        const string rpcS3GamePath = "/rpcs3/dev_hdd0/game";
-
-        if (!normalizedPath.Contains(rpcS3GamePath, StringComparison.OrdinalIgnoreCase))
-        {
-            IsGameFolderValid = false;
-            GameFolderStatus = "Select the RPCS3 dev_hdd0/game folder.";
-            SaveGameFolderData();
-            return;
-        }
-
-        var requiredGameFolder = Path.Combine(GameFolderPath, GameFolderName);
-        IsGameFolderValid = Directory.Exists(requiredGameFolder);
-        GameFolderStatus = IsGameFolderValid
-            ? $"Game folder found: {requiredGameFolder}"
-            : $"Game folder '{GameFolderName}' was not found in the selected folder.";
+        var detection = GameInstallationDetector.Detect(GameFolderPath, _gameEditions);
+        SetDetectedEdition(detection.Edition);
+        IsGameFolderValid = detection.IsValid;
+        GameFolderStatus = detection.Message;
         SaveGameFolderData();
     }
 
-    private void SaveGameFolderData() =>
-        _userDataStore?.SaveGameFolder(GameFolderName, GameFolderPath, IsGameFolderValid);
+    private void SaveGameFolderData()
+    {
+        if (_userDataStore is not null && _detectedEdition is not null)
+        {
+            _userDataStore.SaveGameFolder(_detectedEdition.TitleId, GameFolderPath, IsGameFolderValid);
+        }
+    }
+
+    private void SetDetectedEdition(GameEdition? edition)
+    {
+        if (Equals(_detectedEdition, edition))
+        {
+            return;
+        }
+
+        _detectedEdition = edition;
+        OnPropertyChanged(nameof(ActiveGameFolderName));
+        OnPropertyChanged(nameof(DetectedEditionName));
+        OnPropertyChanged(nameof(IsLooseModInstallation));
+        OnPropertyChanged(nameof(IsPackedPsarcInstallation));
+    }
 
     [RelayCommand]
     private async Task UnpackGameFilesAsync()
@@ -137,8 +182,13 @@ public abstract partial class GamePageViewModelBase : ViewModelBase
 
         try
         {
+            if (!IsLooseModInstallation)
+            {
+                throw new InvalidOperationException("This edition streams packed PSARCs. Use the packed profile controls instead of unpacking it.");
+            }
+
             var service = new GamePsarcExtractionService();
-            var extractedFiles = await service.ExtractInstallArchivesAsync(GameFolderPath, GameFolderName);
+            var extractedFiles = await service.ExtractInstallArchivesAsync(GameFolderPath, ActiveGameFolderName);
             IsPsarcExtractionSuccessful = true;
             PsarcExtractionStatus = $"Extracted {extractedFiles} files. Original archives were moved to backup.";
         }
@@ -164,6 +214,89 @@ public abstract partial class GamePageViewModelBase : ViewModelBase
             ModFilePath = selectedFiles[0].Path.LocalPath;
         }
     }
+
+    [RelayCommand]
+    private async Task BrowsePsarcProfileAsync(IStorageProvider storageProvider)
+    {
+        var selectedFolders = await storageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+        {
+            Title = "Select a verified PSARC profile folder",
+            AllowMultiple = false
+        });
+
+        if (selectedFolders.Count > 0)
+        {
+            PsarcProfilePath = selectedFolders[0].Path.LocalPath;
+        }
+    }
+
+    [RelayCommand]
+    private async Task BrowseCleanRetailPsarcAsync(IStorageProvider storageProvider)
+    {
+        var selectedFolders = await storageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+        {
+            Title = "Select the clean retail PSARC pair (optional after first backup)",
+            AllowMultiple = false
+        });
+
+        if (selectedFolders.Count > 0)
+        {
+            CleanRetailPsarcPath = selectedFolders[0].Path.LocalPath;
+        }
+    }
+
+    [RelayCommand]
+    private async Task InstallPackedPsarcProfileAsync()
+    {
+        PackedPsarcStatus = null;
+        IsPackedPsarcSuccessful = false;
+        try
+        {
+            if (!IsGameFolderValid || !IsPackedPsarcInstallation)
+            {
+                throw new InvalidOperationException("Select a valid packed-PSARC edition first.");
+            }
+
+            var service = new PackedPsarcProfileService();
+            var result = await Task.Run(() => service.InstallProfile(
+                GameFolderPath,
+                ActiveGameFolderName,
+                PsarcProfilePath,
+                string.IsNullOrWhiteSpace(CleanRetailPsarcPath) ? null : CleanRetailPsarcPath));
+            IsPackedPsarcSuccessful = true;
+            PackedPsarcStatus = FormatPackedPsarcResult(result);
+        }
+        catch (Exception exception)
+        {
+            PackedPsarcStatus = $"Packed profile installation failed: {exception.Message}";
+        }
+    }
+
+    [RelayCommand]
+    private async Task RestoreRetailPsarcAsync()
+    {
+        PackedPsarcStatus = null;
+        IsPackedPsarcSuccessful = false;
+        try
+        {
+            if (!IsGameFolderValid || !IsPackedPsarcInstallation)
+            {
+                throw new InvalidOperationException("Select a valid packed-PSARC edition first.");
+            }
+
+            var service = new PackedPsarcProfileService();
+            var result = await Task.Run(() => service.RestoreRetail(GameFolderPath, ActiveGameFolderName));
+            IsPackedPsarcSuccessful = true;
+            PackedPsarcStatus = FormatPackedPsarcResult(result);
+        }
+        catch (Exception exception)
+        {
+            PackedPsarcStatus = $"Retail restore failed: {exception.Message}";
+        }
+    }
+
+    private static string FormatPackedPsarcResult(PackedPsarcOperationResult result) =>
+        $"{result.Action}: {string.Join(", ", result.Archives.Select(archive => $"{archive.FileName} ({archive.Length:N0} bytes, {archive.EntryCount} entries, SHA-256 {archive.Sha256[..12]}…)") )}.";
 
     [RelayCommand]
     private async Task BrowseXppArchiveAsync(IStorageProvider storageProvider)
@@ -228,10 +361,15 @@ public abstract partial class GamePageViewModelBase : ViewModelBase
 
         try
         {
+            if (!IsLooseModInstallation)
+            {
+                throw new InvalidOperationException("This edition requires a verified packed PSARC profile, not a loose XPPS file.");
+            }
+
             var service = new GameModInstallationService();
-            var installationHistory = _userDataStore?.GetModInstallationHistory(GameFolderName) ?? [];
-            var result = await Task.Run(() => service.Install(GameFolderPath, GameFolderName, ModFilePath, installationHistory));
-            _userDataStore?.SaveModInstallation(GameFolderName, result.HistoryEntry);
+            var installationHistory = _userDataStore?.GetModInstallationHistory(ActiveGameFolderName) ?? [];
+            var result = await Task.Run(() => service.Install(GameFolderPath, ActiveGameFolderName, ModFilePath, installationHistory));
+            _userDataStore?.SaveModInstallation(ActiveGameFolderName, result.HistoryEntry);
             IsModInstallationSuccessful = true;
             ModInstallationStatus = $"Mod installed: {result.InstalledPath}";
         }
@@ -271,6 +409,17 @@ public abstract partial class GamePageViewModelBase : ViewModelBase
     partial void OnIsModInstallationSuccessfulChanged(bool value)
     {
         OnPropertyChanged(nameof(IsModInstallationFailed));
+    }
+
+    partial void OnPackedPsarcStatusChanged(string? value)
+    {
+        OnPropertyChanged(nameof(HasPackedPsarcStatus));
+        OnPropertyChanged(nameof(IsPackedPsarcFailed));
+    }
+
+    partial void OnIsPackedPsarcSuccessfulChanged(bool value)
+    {
+        OnPropertyChanged(nameof(IsPackedPsarcFailed));
     }
 
     partial void OnXppExtractionStatusChanged(string? value)
